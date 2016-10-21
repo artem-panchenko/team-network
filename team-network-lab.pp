@@ -72,7 +72,7 @@ define shell_user(
   user {"$user":
     shell  => '/bin/bash',
     ensure => present,
-    groups => ['libvirtd'],
+    groups => ['libvirtd', 'docker'],
     home   => "/home/${user}",
   } ->
   file {"/home/${user}":
