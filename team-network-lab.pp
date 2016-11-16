@@ -11,7 +11,7 @@
 
 ###############################################################################
 # Some variables
-$vagrant_ver = '1.8.4'
+$vagrant_ver = '1.8.7'
 $vagrant_url = "https://releases.hashicorp.com/vagrant/${vagrant_ver}/vagrant_${vagrant_ver}_x86_64.deb"
 $vagrant_num_instances = 5
 ###############################################################################
@@ -479,7 +479,7 @@ exec {'download_vagrant':
   unless   => "test -f /var/tmp/vagrant_${vagrant_ver}_x86_64.deb",
 }
 package {'vagrant':
-  ensure   => installed,
+  ensure   => latest,
   provider => 'dpkg',
   source   => "/var/tmp/vagrant_${vagrant_ver}_x86_64.deb",
   tag      => ['vagrant'],
