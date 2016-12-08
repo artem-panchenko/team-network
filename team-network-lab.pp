@@ -63,6 +63,11 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCa06S3WW2GM3v2mUlK5kOYli6+4s9ed3rM+0osJYdg
     ip_pool => '10.190.0.0/16:24',
     vagrant_pool => '10.90.0.0/16',
   },
+  'aarzhanov' => {
+    pubkey  => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDULnUS0LRq5K95vo0rFuxRxHt7vK/M/m4HVYNe0FcGnLESeFEb8Ip5NYl2P+77OQP/uPpOnDorFgBqANQXw8pHRihqRNXG7PylrOITHc/0RLiJvIEWt82Fw0Sz/6fY6b+/mVs01kD25MJy5lWNZEtxbbSaCmtst/9+ZIySYPnL2rNf3wTsW/IHDAziCqZr6nxfp0cIPy5KtNdT/AithsPvimdveSe25uEdZKxvfE/r3c6wock73ZIDLb9bzPaPQX5kZc9AAAuBfL2Vtzb9juFvPnwkK3mC/geGppP00wvmO12/WqEHRh92BMVpNOTgYpsvU37E9S5pjbTejTlcLPMR coolenigmaboy@aarzhanov',
+    ip_pool => '10.115.0.0/16:24',
+    vagrant_pool => '10.215.0.0/16',
+  },
 }
 
 define shell_user(
