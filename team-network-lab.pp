@@ -333,8 +333,16 @@ exec {'virsh-pool-start':
 #}
 
 exec {'create-virtual-env':
-  command => 'virtualenv --system-site-packages /opt/fuel-devops-venv',
+  command => 'virtualenv --no-site-packages /opt/fuel-devops-venv',
   creates => '/opt/fuel-devops-venv',
+} ->
+exec {'setup-fuel-devops':
+  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install git+https://github.com/openstack/fuel-devops.git@3.0.3 --upgrade"',
+  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/devops',
+} ->
+exec {'setup-psycopg2':
+  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install psycopg2"',
+  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/psycopg2',
 }
 
 class { 'postgresql::server': }
@@ -358,10 +366,10 @@ exec {'download-fuel-qa':
   command => 'git clone https://github.com/openstack/fuel-qa',
   creates => '/opt/fuel-qa',
 } ->
-exec {'setup-fuel-devops':
+exec {'setup-fuel-qa':
   cwd     => '/opt/fuel-qa',
   command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install -r ./fuelweb_test/requirements.txt --upgrade"',
-  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/devops',
+  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/jenkins',
 }
 
 sysctl { 'net.bridge.bridge-nf-call-iptables': value => '0' }
