@@ -33,7 +33,7 @@ $users_hash = {
     vagrant_pool => '10.230.0.0/16',
   },
   'aroma'  => {
-    pubkey  => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDdfhmasxA6fJTwHi9iNidy7FuGjl68aT+VubzYAcEaQJs6gJvLyrpy9YXqGhf+dE8B7IQL3YOQDlBxxKl9py04qIXyb1LwXAlmtTYg9m97tAXsHNlrk6MPQBfRNoJpwyQ+SV4tQs9r/ua5Nh4G5R555dRA0xE3TKKpoNsb3UFNbwkl+t1BkCNgiMhP2EHhXKH4xbXmGbRN2AZAHm/52bHaIWO+ViI7nYNpJ+UuNodih4fKUNW8w3/agb/bLvRDixKxNk8KLV4Q2wuVz3SvD1RFpsmw403wNiQORJC0gQ7MTQ9VMGBY69AYeoqHIXJxG6SdE5c1MSf1ivS/GP5MypdySwuo/3n7AjgRmCLmaKMZ+VWmwcig+Gp4t3SeRmRjKeJK1VY0JLNmj8b1mc/BY2ZgQOBrLZ/bjbfF5h280f9WjxFddsTIwvtIMUnsAGGVAnq+hWe5/728bJsa7gwOKcPOcMVCmFIBWPTZEgV/bP7W7usdRB7fTZnrJVR4Ta0wMgJ9B+gq6AKsA1w+zVh+7xPBCmBdLzUbX/kiGRoOFgva5+G/n4oKbbJQmH/9p+8F3uQocdwQpdytUGjOiD14EdE8uOA60hFgJ74dqRRScF88DfTPjAaJ/ApE3HcCUwUu+MXsMs6M6WN0eHrJHXcjKV+tTxdMnWdU6ixUrXZDhGCW/w== aroma@mirantis.com',
+    pubkey  => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOVomDosX6yuF46qh1HFBWCf8OiJY2nKKfbSNf5BItcHOErtjrOPd0NliPSW+Akr4fy5wln1nlIGfMjq+ZVY1Yv59hBB1Hbebik3K5d+BX9KIYHctjrclXLhtiXCFS/X2XRoMcZwOq1ozdo7S7aKSGl6fZVfaxjF1KMIc7RajmEop3eLYMkurqcxjdhBb2FplEpumHnBJtHhgnCDOI4DwVpczVhUDun5YRmCS7w1VcQ5LQphll5Pnj11G9xw84vwPIINr5NvqkKYudnWjF4elqnPMfr+A9m4ZeBgDZPO6QSMtYL3ZImANwaNtw1poZzxzVgVFmM9yCS/QJjqV3/br4mY6g00hmqqFdnZRi5MTMskvq7aBV11DCgJvrzX24RVmyYi6hFo5pqWqieaGDKSH0I7/kQXbuJnjyCTXdMwaqDiNOZkGoHNwucfNVJ6TugoJWhILpqkqc8hCz4i14v/zbKm7musoeIXUod3UxlVB34PdRhU4m0GznmfOdEWNwz1u29IeeQVunGwwzWnHENvlqMtpiWPXyPjNqO+4VKtzlioYIEgGS4gFGpq+RP0z9EDO9qU/nwUPVfp2izwd39XwKtuqlMLBxf6dYy2FJAd9q6Uzbv0aN5K9CRvsqFSVjzY9Vv0BS0VsZgP9/ie3i98zpPNO7JpqGRjkq64TL6RDyDw== aroma@mirantis.com',
     ip_pool => '10.140.0.0/16:24',
     vagrant_pool => '10.240.0.0/16',
   },
@@ -53,8 +53,8 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCa06S3WW2GM3v2mUlK5kOYli6+4s9ed3rM+0osJYdg
     ip_pool => '10.170.0.0/16:24',
     vagrant_pool => '10.70.0.0/16',
   },
-  'asaprykin' => {
-    pubkey  => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDBIId2sAVCA8cyMbrKXZEf8vgQGXK+hzi1ccwcEU2KUS0TLkKfXmu5GmYTc1rS7vHIHEs3xrxroD/ZUB+NRcob24rP2xczeL8E75cLIBQlTkcs/qzSZNqo6yWKL8r4dSKp113p/TRLStRCaIhFcvozWpFXy7+Q5CGRrf4JOiesoyKSyYIaehFhJDo9sDzwLHwXgE/azzZSbwCdCl80JhQ66S4/6PxaubZqEJV/Xd9FhXoJiwxDVUBb6qFFfYa5+xIZs5zCCeGs9qwK0p4oeYs36mzyuTJwtOwMoktDVnr/awZpe+w1wva0aELuPwo0EdpBjP+buGmYir/2f1UcrY9l ctw-macbook',
+  'apopovych' => {
+    pubkey  => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDALtQKLsFXAJrOe1FL/5T9Rn7nHuTrfNKVb/reqpnMaPUcmRLPPmT9OqR5DiwYCf78xk8vHh5ogR4Cg5mdpgJwVGkQYhCqjiNiMFmlKImQx0bMlj1vQJk+x7qQQFras5jRHV6Ui2yI3o5laxX7GzgYlt39qMBEtyZrzwHzxfT//NQcFOYnKWjgcH8Z7C+nR8rixaicJEQ7jEAQVyzeA+I94gErd1Uy9LUXO33L4jKStKeQN89vl0OF6rperji1B9qFRb2CW/+kMdLmDBeoKHbTVYikHG8c15E1oaw6EeepWx8AaeFHi9T2+xwOrJ4Pw1UCyi/5d9Qf0RE3FdoAUvnJ falkerson@quasar',
     ip_pool => '10.180.0.0/16:24',
     vagrant_pool => '10.80.0.0/16',
   },
