@@ -3,11 +3,12 @@
 # Requires: parser = future
 #   puppet apply --parser future -d -v team-network-lab.pp
 # Requires modules:
-#   postgres
+#   puppetlabs/postgresql
+#   puppetlabs/vcsrepo
 #   thias-sysctl
 #   puppetlabs-firewall
 # Install modules:
-#   puppet module install puppetlabs/postgresql thias-sysctl puppetlabs-firewall
+#   for name in puppetlabs/postgresql puppetlabs/vcsrepo thias-sysctl puppetlabs-firewall; do puppet module install $name; done
 
 ###############################################################################
 # Some variables
@@ -99,12 +100,27 @@ define shell_user(
     mode    => '0644',
     content => $user_hash[$user]['pubkey'],
   } ->
-  exec { "clone_test_scripts_for_${user}":
-    cwd     => "/home/${user}",
-    command => 'git clone https://github.com/adidenko/fuel-tests',
-    creates => "/home/${user}/fuel-tests",
-    user    => $user,
+  file { "/home/${user}/fuel-ccp-workspace":
+    ensure => directory,
+    owner  => $user,
+    group  => $user,
+    mode   => '0755',
+  } ->
+  vcsrepo { "/home/${user}/fuel-tests":
+    ensure   => present,
+    provider => git,
+    source   => 'git://github.com/adidenko/fuel-tests.git',
+    revision => 'master',
+    user     => $user,
+  } ->
+  vcsrepo { "/home/${user}/fuel-ccp-installer":
+    ensure   => present,
+    provider => git,
+    source   => 'git://github.com/openstack/fuel-ccp-installer.git',
+    revision => 'master',
+    user     => $user,
   }
+
   $master_ip  = inline_template('<%= @user_hash[@user]["ip_pool"].gsub("0/16:24", "2") %>')
   $public_vip = inline_template('<%= @user_hash[@user]["ip_pool"].gsub("0.0/16:24", "3.3") %>')
   $octets     = split($user_hash[$user]['ip_pool'], '[.]')
@@ -333,17 +349,67 @@ exec { 'virsh-pool-start':
 #  ensure => running,
 #}
 
-exec { 'create-virtual-env':
-  command => 'virtualenv --no-site-packages /opt/fuel-devops-venv',
-  creates => '/opt/fuel-devops-venv',
-} ->
-exec { 'setup-fuel-devops':
-  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install git+https://github.com/openstack/fuel-devops.git@3.0.3 --upgrade"',
-  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/devops',
-} ->
-exec { 'setup-psycopg2':
-  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install psycopg2"',
-  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/psycopg2',
+$venvs = [
+  '/opt/fuel-devops-venv-master',
+  '/opt/fuel-devops-venv-newton',
+  '/opt/fuel-devops-venv-mitaka'
+]
+
+$fuel_qa_hash = {
+  'fuel-qa-master' => {
+    rev  => 'master',
+    venv => 'fuel-devops-venv-master',
+  },
+  'fuel-qa-newton' => {
+    rev  => 'stable/newton',
+    venv => 'fuel-devops-venv-newton',
+  },
+  'fuel-qa-mitaka' => {
+    rev  => 'stable/mitaka',
+    venv => 'fuel-devops-venv-mitaka',
+  },
+}
+
+define virtual_env(
+  $venv = $name,
+){
+  exec { "create-virtual-env_${venv}":
+    command => "virtualenv --no-site-packages ${venv}",
+    creates => $venv,
+  } ->
+  exec { "setup-fuel-devops-for_${venv}":
+    command => "bash -c 'source ${venv}/bin/activate ; pip install git+https://github.com/openstack/fuel-devops.git@3.0.3#egg=project[postgre] --upgrade ; dos-manage.py migrate'",
+    creates => "${venv}/lib/python2.7/site-packages/devops",
+  }
+}
+
+define fuelqa(
+  $fuelqa_hash,
+  $fuel_qa = $name,
+){
+  $python_venv = $fuelqa_hash[$fuel_qa]['venv']
+  $git_rev     = $fuelqa_hash[$fuel_qa]['rev']
+  vcsrepo { "/opt/${fuel_qa}":
+    ensure   => present,
+    provider => git,
+    source   => 'git://github.com/openstack/fuel-qa.git',
+    revision => $git_rev,
+  } ->
+  file { "/opt/${fuel_qa}":
+    ensure => directory,
+    mode   => '0777',
+  } ->
+  exec { "setup-${fuel_qa}":
+    cwd     => "/opt/${fuel_qa}",
+    command => "bash -c 'source /opt/${python_venv}/bin/activate ; pip install -r ./fuelweb_test/requirements.txt --upgrade'",
+    creates => "/opt/${python_venv}/lib/python2.7/site-packages/openstack",
+  }
+#  tidy { "delete-requirements-in-${fuel_qa}":
+#    path    => "/opt/${fuel_qa}/fuelweb_test",
+#    recurse => 1,
+#    matches => [ 'requirements*.txt' ],
+#    rmdirs  => false,
+#  }
 }
 
 class { 'postgresql::server': }
@@ -353,24 +419,19 @@ postgresql::server::db { 'nailgun':
   password => postgresql_password('nailgun', 'nailgun'),
 }
 
+$fuel_qa = map($fuel_qa_hash) |$x| { $x[0] }
+
 postgresql::server::db { 'fuel_devops':
   user     => 'fuel_devops',
   password => postgresql_password('fuel_devops', 'fuel_devops'),
 } ->
+virtual_env { $venvs: } ->
 exec { 'setup-django-db':
-  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; django-admin.py syncdb --settings=devops.settings ; django-admin.py migrate devops --settings=devops.settings"',
-  unless  => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; dos.py list"',
-}
-
-exec { 'download-fuel-qa':
-  cwd     => '/opt',
-  command => 'git clone https://github.com/openstack/fuel-qa',
-  creates => '/opt/fuel-qa',
+  command => 'bash -c "source /opt/fuel-devops-venv-master/bin/activate ; django-admin.py syncdb --settings=devops.settings ; django-admin.py migrate devops --settings=devops.settings"',
+  unless  => 'bash -c "source /opt/fuel-devops-venv-master/bin/activate ; dos.py list"',
 } ->
-exec { 'setup-fuel-qa':
-  cwd     => '/opt/fuel-qa',
-  command => 'bash -c "source /opt/fuel-devops-venv/bin/activate ; pip install -r ./fuelweb_test/requirements.txt --upgrade"',
-  creates => '/opt/fuel-devops-venv/lib/python2.7/site-packages/jenkins',
+fuelqa { $fuel_qa:
+  fuelqa_hash => $fuel_qa_hash,
 }
 
 sysctl { 'net.bridge.bridge-nf-call-iptables': value => '0' }
@@ -416,31 +477,54 @@ export POOL_DEFAULT="${ip_pools[$(whoami)]}"
 export VAGRANT_POOL="${vagrant_pools[$(whoami)]}"
 export MY_MASTER="${fmaster[$(whoami)]}"
 function helpme {
-echo -e "\n##################################################"
-echo -e "TEAM-NETWORK INFO\n"
-echo -e "Fuel-devops path:            /opt/fuel-devops-venv/"
-echo -e "Fuel-qa path:                /opt/fuel-qa/"
-echo -e "Test scripts path:           ~/fuel-tests/"
-echo -e "Direcotry for ISO sharing:   /opt/fuel-iso"
-echo -e "\nCOMMANDS:"
-echo -e "\n# Run tests:"
-echo -e "vim ~/fuel-tests/testsrc"
-echo -e "~/fuel-tests/systest.sh"
-echo -e "\n# Activate fuel-devops venv and list envs:"
-echo -e ". /opt/fuel-devops-venv/bin/activate"
-echo -e "dos.py list"
-echo
-echo "YOUR FUEL WEB URL IS: https://$MY_MASTER/"
-echo
-echo "YOUR IP_POOL FOR SYSTEM-TESTS IS: $POOL_DEFAULT"
-echo
-echo "You can make sure it\'s set by running this command:"
-echo "echo \$POOL_DEFAULT"
-echo
-echo "YOUR VAGRANT POOL IS: $VAGRANT_POOL"
-echo "You can make sure it\'s set by running this command:"
-echo "echo \$VAGRANT_POOL"
-echo -e "\n##################################################\n"
+echo -e "\e[34m########################################################################\e[0m    "
+echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
+echo -e "\e[34m########################################################################\e[0m    "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mFuel-devops path:\e[0m                                              "
+echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-master ( for Fuel 11 and CCP installer )         "
+echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-newton ( for Fuel 10 )                           "
+echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-mitaka ( for Fuel 9.x )                          " 
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mFuel-qa path:\e[0m                                                  "
+echo -e "\e[34m#\e[0m    /opt/fuel-qa-master ( for Fuel 11 )                                    "
+echo -e "\e[34m#\e[0m    /opt/fuel-qa-newton ( for Fuel 10 )                                    "
+echo -e "\e[34m#\e[0m    /opt/fuel-qa-mitaka ( for Fuel 9.x )                                   "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mTest scripts path:\e[0m                                             " 
+echo -e "\e[34m#\e[0m    "${HOME}"/fuel-tests                                                   "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mDirectory for ISO sharing:\e[0m                                     "
+echo -e "\e[34m#\e[0m    /opt/fuel-iso                                                          "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#                        # COMMANDS: #\e[0m                                      "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mRun tests:\e[0m                                                     "
+echo -e "\e[34m#\e[0m    * Activate the necessary fuel-devops venv and list envs:               "
+echo -e "\e[34m#\e[0m       \e[37m . /opt/fuel-devops-venv-XXXXXX/bin/activate \e[0m            "
+echo -e "\e[34m#\e[0m       \e[37m dos.py list \e[0m                                            "
+echo -e "\e[34m#\e[0m    * Edit some variables, if needed and run tests:                        "
+echo -e "\e[34m#\e[0m       \e[37m vim ~/fuel-tests/testsrc \e[0m                               "
+echo -e "\e[34m#\e[0m       \e[37m bash ~/fuel-tests/systest.sh -h \e[0m                        "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  Your \e[4mFUEL WEB URL\e[0m is:\e[33m https://"${MY_MASTER}"/\e[0m       "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  Your \e[4mIP_POOL\e[0m for SYSTEM-TESTS is:\e[33m "${POOL_DEFAULT}"\e[0m "
+echo -e "\e[34m#\e[0m  You can make sure it\'s set by running this command:                     "
+echo -e "\e[34m#\e[0m   \e[37m echo \$POOL_DEFAULT \e[0m                                        "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mAll info about vargant env:\e[0m                                    "
+echo -e "\e[34m#\e[0m    \e[32m https://github.com/adidenko/vagrant-k8s \e[0m                   "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  Your \e[4mVAGRANT POOL\e[0m is:\e[33m "${VAGRANT_POOL}"\e[0m             "
+echo -e "\e[34m#\e[0m  You can make sure it\'s set by running this command:                     "
+echo -e "\e[34m#\e[0m   \e[37m echo \$VAGRANT_POOL \e[0m                                        "
+echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m########################################################################\e[0m    "
+echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
+echo -e "\e[34m########################################################################\e[0m    "
 }
 helpme
 ')
@@ -455,7 +539,7 @@ file { '/usr/local/bin/run_puppet.sh':
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date
 iptables --version
-while `iptables -L --line-numbers -nv | grep _allow | head -n1 | awk \'{print $1}\' | xargs iptables -D FORWARD $i ` ; do echo REMOVED;  done
+while `iptables -L --line-numbers -nv | grep _allow | head -n1 | awk \'{print $1}\' | xargs iptables -D FORWARD $i ` ; do echo REMOVED; done
 puppet apply --parser future -d -v /home/adidenko/team-network-lab.pp &> /var/log/puppet.log
 ',
 }
