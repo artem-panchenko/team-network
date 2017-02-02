@@ -305,6 +305,9 @@ $packages = [
   'python-virtualenv',
   'libpq-dev',
   'libgmp-dev',
+  'createrepo',
+  'rpm',
+  'dpkg-dev',
   'iptables-persistent'
 ]
 
@@ -380,6 +383,10 @@ define virtual_env(
   exec { "setup-fuel-devops-for_${venv}":
     command => "bash -c 'source ${venv}/bin/activate ; pip install git+https://github.com/openstack/fuel-devops.git@3.0.3#egg=project[postgre] --upgrade ; dos-manage.py migrate'",
     creates => "${venv}/lib/python2.7/site-packages/devops",
+  } ->
+  exec { "setup-fuel-plugin-builder-for_${venv}":
+    command => "bash -c 'source ${venv}/bin/activate ; pip install fuel-plugin-builder'",
+    creates => "${venv}/lib/python2.7/site-packages/fuel_plugin_builder",
   }
 }
 
@@ -398,6 +405,10 @@ define fuelqa(
   file { "/opt/${fuel_qa}":
     ensure => directory,
     mode   => '0777',
+  } ->
+  file { "/opt/${fuel_qa}/nosetests.xml":
+    ensure => file,
+    mode   => '0666',
   } ->
   exec { "setup-${fuel_qa}":
     cwd     => "/opt/${fuel_qa}",
