@@ -12,7 +12,7 @@
 
 ###############################################################################
 # Some variables
-$vagrant_ver = '1.8.7'
+$vagrant_ver = '1.9.2'
 $vagrant_url = "https://releases.hashicorp.com/vagrant/${vagrant_ver}/vagrant_${vagrant_ver}_x86_64.deb"
 $vagrant_num_instances = 5
 ###############################################################################
