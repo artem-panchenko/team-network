@@ -12,7 +12,7 @@
 
 ###############################################################################
 # Some variables
-$vagrant_ver = '1.9.2'
+$vagrant_ver = '1.9.3'
 $vagrant_url = "https://releases.hashicorp.com/vagrant/${vagrant_ver}/vagrant_${vagrant_ver}_x86_64.deb"
 $vagrant_num_instances = 5
 ###############################################################################
@@ -38,21 +38,10 @@ $users_hash = {
     ip_pool      => '10.140.0.0/16:24',
     vagrant_pool => '10.240.0.0/16',
   },
-  'mstrukov' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDzbNI1nFRFuTFYFXKUioYEtr+4oKgBuO32hxnxuE1ohTbjBd0TK4abyzaZgVVk3qx3fdfvxmBcCtjRIElPOeQq9JNDHtXouPa8enUNXeeA8c2FAPZEdG6poEHGY43BNo9rxQJL4ddrJf+ykx6yNLYGGlrNRNK3erCbMY7lz2wWovvGa+ulLdC9NAGrywxTjKJjw1qdH6+fs1PuAAkSnU/nGnf+cAO6pgX+nM8t/j6mfGeYMd4UpMOczu+uNj2VqGDtQOoA7me2U+RD3iP/Y/LtMmvjLq2JXJphbMBJ0+ZrJyE8DTkTM1mnDCWJA9Smt25doks4534t2zyfUQfR2/uZby++X7zLd5WePe1dTzYFeC8GzYWr88S7XKpZs6u3dAcaLf2BedbWap3msHT07B04YNaLc5WkRo0J9WQBw0gCPPIod9QHvvymKhN6Or+UYJ/kklSsTRA6TBsWezAikn+5JlowENzY3HQafmgS4x4mgMnlxTw+YNXZmWaUoj7iIxLS1FwzSrrIzyGoY8DgX2Gz+KPhqlT7YxmPX+5wWR78RF1ozB9GWbkOHmeoPSp6QU/OWeve3s378SFLD89fCIqwESmULP4E99FyEO8zTGrwzMcYs06PxPpEoImQD/fX3+ismY4r2X2IsRlZ9GFpPEPX7XOD8P3u9VwQXEOW/jUa9w== mstrukov@mstrukov-pc
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCa06S3WW2GM3v2mUlK5kOYli6+4s9ed3rM+0osJYdgHV60OVxpiVGDtwlXGUSHVllZqPT5a2n7CMfIWqZV5s0aec8kTbbxWT15Ykoi8OVOMd2EJYDDpYMa6vIcw91LVkHmZnUMlu6ZSYUT+4mM2o9wsxtuV0UdCkf9xOzj2GYmBD41/6FpO+kg1NE2+8247rySBLem4cN9KCU+XRBJKD9LFkZEYPG8rRgoQRQ6ePAZcbvfhu7IGKYDshumQm1R1q968Iu4hrkbL8PYEScVG+JRlU1aTzZnfrM2RgmgmPxVdPR6TRUoqlRB0Ko6g4MbvOVNUMSbexhlMTFy2oR4Jbdqx+p+PD2fplMLsVz1+UCEX2YDsSCR0BRWLOJUuvxOeRAQC6jOjGhCWRquQFwhhD2xlVK/VwTMr6WSE5s3rZhAb2rhpH4332t6Xe9t3sokLg/WlDoRCy7RL9RafpFwYogeDEjqi447q0NRhsDRa9BwxEpWkqBcXZiwA0ZTp/py8FtEyAwPtzkgmp6AtVo+LK9BegYlOXNCiJxpY8fgRr50psLhA+LQFZVnidCbMq8Ld81UWazQEzCfN6lf96PCfmi6X7qkSxuuPQ/hdK4yHtJQ5z9oR795JV6zxMVmL1pl5cwE0liHdcXVebFMR0vWtnDxv9aGoueuJFlhkabxgI32aQ== maxik@power',
-    ip_pool      => '10.150.0.0/16:24',
-    vagrant_pool => '10.250.0.0/16',
-  },
   'akasatkin' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJFOEwYid83klmXcQs9QBDJwb1EG6Ly7DpJ32aH8gB8uguUPVO3rS/08GNav7+6GFLwlbWHVDe1MIFeNvyqh778B2piCzoajIT8aZFiutjbGtVPfkGkt94mibVutjO36eSEjEDW8GYQ2boisibha6B2mlz126y7nJN1VDSUr05Ro719i696vdN0fglu5DlT6qnOSei16EqkgQcMdyoxCfUOy9zBe3p1jGd2XKCOy3aGkhixEj6oaWSFRcA48SgqNSUO9A5NHTmWT/3j76Jsk92yw4e5OenWJbVx0BkU8q6U5fIncxkIQRYFUqB0X1TT9PnktDD4iJwNMXY7W2hYN2/ aleksey@aleksey-ThinkPad',
     ip_pool      => '10.160.0.0/16:24',
     vagrant_pool => '10.60.0.0/16',
-  },
-  'veremin' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5VpKME2EWRH2XHgipoZJwW7fjWoBBQq3xA1+1jMWf+P2avy9Xjkgf0WIpQ7/FLXln+4HI18HME6XHjTiV6tMTMprtnllz+9j8Wxl2Umt8hBh2V1wzyp1E1d8j4MU6SvA5ZaTxx711DKhEWH9fXhw+7o9rQdxWSZbbvodz5VGfo7YxPX4OkEHUhJYYfsfyNXjHWpMYmpzICHqc47myQAiDc0OupQ8m2XZhc8imYRe01bBJLBgET2cYui2puHyT++EbcR+vFstoM6FtbsP4ii+z2b5+vsnm5awYLECvs5IF5deN2dX2H/azdcpDQRKToxJ8UjYJDi+GB8FwTMBY4Ozf yottatsa@Vladimirs-MacBook-Air.local',
-    ip_pool      => '10.170.0.0/16:24',
-    vagrant_pool => '10.70.0.0/16',
   },
   'apopovych' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDALtQKLsFXAJrOe1FL/5T9Rn7nHuTrfNKVb/reqpnMaPUcmRLPPmT9OqR5DiwYCf78xk8vHh5ogR4Cg5mdpgJwVGkQYhCqjiNiMFmlKImQx0bMlj1vQJk+x7qQQFras5jRHV6Ui2yI3o5laxX7GzgYlt39qMBEtyZrzwHzxfT//NQcFOYnKWjgcH8Z7C+nR8rixaicJEQ7jEAQVyzeA+I94gErd1Uy9LUXO33L4jKStKeQN89vl0OF6rperji1B9qFRb2CW/+kMdLmDBeoKHbTVYikHG8c15E1oaw6EeepWx8AaeFHi9T2+xwOrJ4Pw1UCyi/5d9Qf0RE3FdoAUvnJ falkerson@quasar',
