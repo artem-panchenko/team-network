@@ -38,19 +38,52 @@ function check-manifest-exist() {
 }
 
 
+function check-running-process() {
+  if pgrep -x "${1}" >/dev/null 2>&1; then
+    echo "${1} is running! Try later."
+    exit 0
+  fi
+}
+
+
 function create-script-for-cron() {
   if [ ! -f "${1}" ]; then
     cat > "${1}" << EOF
 #!/bin/bash
+###########
+#
 #
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 #
-date
-iptables --version
-while iptables -L --line-numbers -nv | grep _allow | head -n1 | awk '{print \$1}' | xargs iptables -D FORWARD; do
-  echo REMOVED;
-done
-puppet apply ${PUPPET_APPLY_ARGS[@]} ${PATH_TO_MANIFESTS}/${MANIFEST_NAME} &> ${PUPPET_LOGS}
+#
+function check-running-process() {
+  date;
+  if pgrep -x "\${1}" >/dev/null 2>&1; then
+    echo "\${1} is running! We will postpone the launch for the next time."
+    exit 0
+  fi
+}
+#
+#
+function clean-iptables-forward {
+  iptables --version;
+  while iptables -L --line-numbers -nv | grep _allow | head -n1 | awk '{print \$1}' | xargs iptables -D FORWARD; do
+    echo REMOVED;
+  done
+}
+#
+#
+function run-puppet {
+  puppet apply ${PUPPET_APPLY_ARGS[@]} ${PATH_TO_MANIFESTS}/${MANIFEST_NAME} &> ${PUPPET_LOGS}
+}
+#
+#
+check-running-process puppet
+clean-iptables-forward
+run-puppet
+#end
+###########
+
 EOF
     chmod +x "${PATH_TO_SCRIPT_FOR_CRON}"
   fi
@@ -76,5 +109,6 @@ function install-modules-and-run-puppet {
 
 check-root
 check-manifest-exist "${MANIFEST_NAME}"
+check-running-process puppet
 create-script-for-cron "${PATH_TO_SCRIPT_FOR_CRON}"
 install-modules-and-run-puppet
