@@ -1,3 +1,5 @@
+###############################################################################
+###############################################################################
 # This manifest is for host system configuration
 # for team-network virtual labs
 # Requires: parser = future
@@ -7,16 +9,34 @@
 #   puppetlabs/vcsrepo
 #   thias-sysctl
 #   puppetlabs-firewall
-# Install modules:
-#   for name in puppetlabs/postgresql puppetlabs/vcsrepo thias-sysctl puppetlabs-firewall; do puppet module install $name; done
-
+#   garethr/docker
+#   camptocamp-kmod
+#   saz-locales
+#
 ###############################################################################
-# Some variables
+# Vagrant variables
 $vagrant_ver = '1.9.3'
 $vagrant_url = "https://releases.hashicorp.com/vagrant/${vagrant_ver}/vagrant_${vagrant_ver}_x86_64.deb"
 $vagrant_num_instances = 5
+# Docker variables
+$docker_version = 'latest'
+$docker_compose_version = '1.10.0'
+# Gimme variables
+$gimme_url = 'https://raw.githubusercontent.com/travis-ci/gimme/master/gimme'
+$gimme_path = 'bin/gimme'
+# Repo variables
+$fuel_tests_repo = 'git://github.com/adidenko/fuel-tests.git'
+$fuel_tests_repo_rev = 'master'
+$fuel_ccp_installer_repo = 'git://github.com/openstack/fuel-ccp-installer.git'
+$fuel_ccp_installer_repo_rev = 'master'
+$fuel_qa_repo = 'git://github.com/openstack/fuel-qa.git'
+# etc
+$path_to_script_for_cron = '/usr/local/bin/run_puppet.sh'
+$cron_run_puppet_logs = '/var/log/run_puppet.log'
+$temp_path_for_vagrant_package = '/var/tmp'
+
 ###############################################################################
-# Create users
+# User data
 $users_hash = {
   'adidenko' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwKpK7YBECkad/ureUhratFOt9BG4WarY4Vp3E5sdtDk+w7AzrK4gXIsDc+CMHkuTpzNMXSvNXYLskpNt1ndCA455BdEr60pyA/HBsxeqio4J1dwlLRbynZRFhjSR+6OyyAf8QCIGCYQZdkQyrHdEKPQNLMa6Pg5bDI6LiPuf+W+JJfUXpychazkAH0FK8kz+vFmLhIiwzVSzH316jBTv8iAfXjyAcgIE5SwkRMBO6bEpNIL7nMhb24i5cKDRruUAfOrLRYIEzur9b9hXFnZo3OSCjn5JwVJzoHusMj1m60leU5vpSjb4JjXkGlVMDmakASmgwQAir/HKlb3Ca6pQ9 adidenko@adidenko-pc',
@@ -89,6 +109,33 @@ define shell_user(
     mode    => '0644',
     content => $user_hash[$user]['pubkey'],
   } ->
+  file { "/home/${user}/bin":
+    ensure => directory,
+    owner  => $user,
+    group  => $user,
+    mode   => '0775',
+  } ->
+  exec { "download_gimme_for_${user}":
+    command     => "wget -O /home/${user}/${gimme_path} ${gimme_url}",
+    unless      => "test -f /home/${user}/${gimme_path}",
+    environment => "HOME=/home/${user}",
+    cwd         => "/home/${user}",
+  } ->
+  file { "/home/${user}/${gimme_path}":
+    ensure  => present,
+    replace => 'no',
+    owner   => $user,
+    group   => $user,
+    mode    => '0775',
+  } ->
+  file { [ "/home/${user}/gopath", "/home/${user}/gopath/src",
+    "/home/${user}/gopath/src/github.com",
+    "/home/${user}/gopath/src/github.com/Mirantis" ]:
+    ensure => directory,
+    owner  => $user,
+    group  => $user,
+    mode   => '0775',
+  } ->
   file { "/home/${user}/fuel-ccp-workspace":
     ensure => directory,
     owner  => $user,
@@ -97,16 +144,20 @@ define shell_user(
   } ->
   vcsrepo { "/home/${user}/fuel-tests":
     ensure   => present,
+    # if use "ensure => latest",
+    # this overwrites any local changes to the repository.
     provider => git,
-    source   => 'git://github.com/adidenko/fuel-tests.git',
-    revision => 'master',
+    source   => $fuel_tests_repo,
+    revision => $fuel_tests_repo_rev,
     user     => $user,
   } ->
   vcsrepo { "/home/${user}/fuel-ccp-installer":
     ensure   => present,
+    # if use "ensure => latest",
+    # this overwrites any local changes to the repository.
     provider => git,
-    source   => 'git://github.com/openstack/fuel-ccp-installer.git',
-    revision => 'master',
+    source   => $fuel_ccp_installer_repo,
+    revision => $fuel_ccp_installer_repo_rev,
     user     => $user,
   }
 
@@ -170,6 +221,7 @@ define shell_user(
     environment => "HOME=/home/${user}",
     cwd         => "/home/${user}",
   }
+
   # Vagrant lab firewall
   $node2_ip = inline_template('<%= @user_hash[@user]["vagrant_pool"].gsub("0/16", "12") %>')
   $v_octets = split($user_hash[$user]['vagrant_pool'], '[.]')
@@ -196,8 +248,10 @@ define shell_user(
 #    action      => 'accept',
 #    chain       => 'FORWARD',
 #  }
+
   # Vagrant skeleton
   $user_subnet = inline_template('<%= @user_hash[@user]["vagrant_pool"].gsub(".0.0/16.*", "") %>')
+
   file { "/home/${user}/vagrant":
     ensure => directory,
     owner  => $user,
@@ -262,7 +316,20 @@ end
 ')
   }
 }
+
 ###############################################################################
+# Install docker, docker-compose
+Class['docker'] -> Shell_user<||>
+
+class { '::docker::compose':
+  ensure  => present,
+  version => $docker_compose_version,
+}
+
+class { '::docker':
+#  docker_users => $users,
+  version => $docker_version,
+}
 
 $users = map($users_hash) |$x| { $x[0] }
 
@@ -272,8 +339,15 @@ shell_user { $users:
 }
 
 ###############################################################################
-# Install software
+# Configure locales
+class { '::locales':
+  default_locale => 'en_US.UTF-8',
+  locales        => ['en_US.UTF-8 UTF-8', 'ru_RU.UTF-8 UTF-8' ],
+  lc_all         => 'en_US.UTF-8',
+}
 
+###############################################################################
+# Install software
 Package<| tag == 'software' |> -> Exec<| tag == 'software' |>
 
 $packages = [
@@ -304,6 +378,7 @@ package { $packages:
   ensure => installed,
   tag    => ['software'],
 }
+
 ###############################################################################
 # Configure libvirt
 # !!!!exec magick!!!!
@@ -312,6 +387,7 @@ Exec<||>{
   logoutput => true,
 }
 
+Class['locales'] -> Exec<| tag == 'libvirt' |>
 Package<| tag == 'software' |> -> Exec<| tag == 'libvirt' |>
 
 exec { 'virsh-pool-create':
@@ -331,15 +407,8 @@ exec { 'virsh-pool-start':
 }
 
 ###############################################################################
-# Configure virtualenv and soft
-#
-#exec { 'update-pg-config':
-#  command => "sed -ir 's/peer/trust/' $pg_conf",
-#  onlyif  => "grep -v ^# $pg_conf | grep peer"
-#} ~>
-#service { 'postgresql':
-#  ensure => running,
-#}
+# Configure virtualenv, devops, fuel-qa requirements, etc
+Class['locales'] -> Virtual_env<||>
 
 $venvs = [
   '/opt/fuel-devops-venv-master',
@@ -361,6 +430,8 @@ $fuel_qa_hash = {
     venv => 'fuel-devops-venv-mitaka',
   },
 }
+
+$fuel_qa = map($fuel_qa_hash) |$x| { $x[0] }
 
 define virtual_env(
   $venv = $name,
@@ -387,8 +458,10 @@ define fuelqa(
   $git_rev     = $fuelqa_hash[$fuel_qa]['rev']
   vcsrepo { "/opt/${fuel_qa}":
     ensure   => present,
+    # if use "ensure => latest",
+    # this overwrites any local changes to the repository.
     provider => git,
-    source   => 'git://github.com/openstack/fuel-qa.git',
+    source   => $fuel_qa_repo,
     revision => $git_rev,
   } ->
   file { "/opt/${fuel_qa}":
@@ -412,14 +485,20 @@ define fuelqa(
 #  }
 }
 
-class { 'postgresql::server': }
+#exec { 'update-pg-config':
+#  command => "sed -ir 's/peer/trust/' $pg_conf",
+#  onlyif  => "grep -v ^# $pg_conf | grep peer"
+#} ~>
+#service { 'postgresql':
+#  ensure => running,
+#}
+
+class { '::postgresql::server': }
 
 postgresql::server::db { 'nailgun':
   user     => 'nailgun',
   password => postgresql_password('nailgun', 'nailgun'),
 }
-
-$fuel_qa = map($fuel_qa_hash) |$x| { $x[0] }
 
 postgresql::server::db { 'fuel_devops':
   user     => 'fuel_devops',
@@ -434,9 +513,12 @@ fuelqa { $fuel_qa:
   fuelqa_hash => $fuel_qa_hash,
 }
 
+
+kmod::load { 'br_netfilter': } ->
 sysctl { 'net.bridge.bridge-nf-call-iptables': value => '0' }
 
 ###############################################################################
+# Create directories for logs, iso and profile file. 
 file { '/var/log/nailgun':
   ensure => directory,
   mode   => '0777',
@@ -470,12 +552,14 @@ declare -A fmaster
 fmaster=( \
 <% @users_hash.each do |user, user_hash|
   master_port = user_hash["ip_pool"].split(/\./)[1] -%>
-["<%= user %>"]="<%= @ipaddress_em1 %>:8<%= master_port %>" \
+["<%= user %>"]="<%= @fqdn %>:8<%= master_port %>" \
 <% end -%>
 )
 export POOL_DEFAULT="${ip_pools[$(whoami)]}"
 export VAGRANT_POOL="${vagrant_pools[$(whoami)]}"
 export MY_MASTER="${fmaster[$(whoami)]}"
+export GOPATH="${HOME}"/gopath
+export PATH="${HOME}"/bin:"${HOME}"/gopath/bin:"${PATH}"
 function helpme {
 echo -e "\e[34m########################################################################\e[0m    "
 echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
@@ -522,6 +606,14 @@ echo -e "\e[34m#\e[0m  Your \e[4mVAGRANT POOL\e[0m is:\e[33m "${VAGRANT_POOL}"\e
 echo -e "\e[34m#\e[0m  You can make sure it\'s set by running this command:                     "
 echo -e "\e[34m#\e[0m   \e[37m echo \$VAGRANT_POOL \e[0m                                        "
 echo -e "\e[34m#\e[0m                                                                           "
+echo -e "\e[34m#\e[0m  \e[1mSetup Go:\e[0m                                                      "
+echo -e "\e[34m#\e[0m    * Example (specify your Go version):                                   "
+echo -e "\e[34m#\e[0m       \e[37m GIMME_OUTPUT=\$(gimme 1.7.5) && eval "\$GIMME_OUTPUT" \e[0m  "
+echo -e "\e[34m#\e[0m    * Check gimme version, go version, go env:                             "
+echo -e "\e[34m#\e[0m       \e[37m gimme version \e[0m                                          "
+echo -e "\e[34m#\e[0m       \e[37m go version \e[0m                                             "
+echo -e "\e[34m#\e[0m       \e[37m go env \e[0m                                                 "
+echo -e "\e[34m#\e[0m                                                                           "
 echo -e "\e[34m########################################################################\e[0m    "
 echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
 echo -e "\e[34m########################################################################\e[0m    "
@@ -529,34 +621,33 @@ echo -e "\e[34m#################################################################
 helpme
 ')
 }
-###############################################################################
-# script and cron to run
 
-file { '/usr/local/bin/run_puppet.sh':
-  ensure  => file,
-  mode    => '0755',
-  content => '#!/bin/bash
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-date
-iptables --version
-while `iptables -L --line-numbers -nv | grep _allow | head -n1 | awk \'{print $1}\' | xargs iptables -D FORWARD $i ` ; do echo REMOVED; done
-puppet apply --parser future -d -v /home/adidenko/team-network-lab.pp &> /var/log/puppet.log
-',
-}
+###############################################################################
+# Script and cron to run
+### Implemented in puppet_apply.sh ###
+#file { '/usr/local/bin/run_puppet.sh':
+#  ensure  => file,
+#  mode    => '0755',
+#  content => '#!/bin/bash
+#export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#date
+#iptables --version
+#while `iptables -L --line-numbers -nv | grep _allow | head -n1 | awk \'{print $1}\' | xargs iptables -D FORWARD $i ` ; do echo REMOVED; done
+#puppet apply --parser future -d -v /home/adidenko/team-network-lab.pp &> /var/log/puppet.log
+#',
+#}
+### Implemented in puppet_apply.sh ###
+
 cron { 'run_puppet':
-  command => '/usr/local/bin/run_puppet.sh &>/var/log/run_puppet.log',
+  command => "${path_to_script_for_cron} &>${cron_run_puppet_logs}",
   user    => 'root',
-  minute  => '*/10',
+  minute  => '*/20',
 }
 
 ###############################################################################
 # Vagrant
-
-Exec<| tag == 'libvirt' |> ->
-Exec<| tag == 'vagrant' |>
-
-Package<| tag == 'vagrant' |> ->
-Exec<| tag == 'vagrant' |>
+Exec<| tag == 'libvirt' |> -> Exec<| tag == 'vagrant' |>
+Package<| tag == 'vagrant' |> -> Exec<| tag == 'vagrant' |>
 
 $vagrant_packages = [
   'bundler',
@@ -573,13 +664,14 @@ package { $vagrant_packages:
 }
 
 exec { 'download_vagrant':
-  command => "wget -N ${vagrant_url} -O /var/tmp/vagrant_${vagrant_ver}_x86_64.deb",
-  unless  => "test -f /var/tmp/vagrant_${vagrant_ver}_x86_64.deb",
+  command => "wget -O ${temp_path_for_vagrant_package}/vagrant_${vagrant_ver}_x86_64.deb ${vagrant_url}",
+  unless  => "test -f ${temp_path_for_vagrant_package}/vagrant_${vagrant_ver}_x86_64.deb",
 }
+
 package { 'vagrant':
   ensure   => latest,
   provider => 'dpkg',
-  source   => "/var/tmp/vagrant_${vagrant_ver}_x86_64.deb",
+  source   => "${temp_path_for_vagrant_package}/vagrant_${vagrant_ver}_x86_64.deb",
   tag      => ['vagrant'],
   require  => Exec['download_vagrant'],
 }
@@ -593,6 +685,5 @@ package { 'vagrant':
 #  tag      => ['vagrant'],
 #}
 
-###############################################################################
 ###############################################################################
 ###############################################################################
