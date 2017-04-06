@@ -348,6 +348,7 @@ class { '::locales':
 
 ###############################################################################
 # Install software
+Class['locales'] -> Package<| tag == 'software' |>
 Package<| tag == 'software' |> -> Exec<| tag == 'software' |>
 
 $packages = [
@@ -408,6 +409,7 @@ exec { 'virsh-pool-start':
 
 ###############################################################################
 # Configure virtualenv, devops, fuel-qa requirements, etc
+Class['locales'] -> Class['postgresql::server']
 Class['locales'] -> Virtual_env<||>
 
 $venvs = [
