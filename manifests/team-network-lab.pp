@@ -5,7 +5,6 @@
 # Requires: parser = future
 #   puppet apply --parser future -d -v team-network-lab.pp
 # Requires modules:
-#   puppetlabs/postgresql
 #   puppetlabs/vcsrepo
 #   thias-sysctl
 #   puppetlabs-firewall
@@ -25,11 +24,8 @@ $docker_compose_version = '1.10.0'
 $gimme_url = 'https://raw.githubusercontent.com/travis-ci/gimme/master/gimme'
 $gimme_path = 'bin/gimme'
 # Repo variables
-$fuel_tests_repo = 'git://github.com/adidenko/fuel-tests.git'
-$fuel_tests_repo_rev = 'master'
-$fuel_ccp_installer_repo = 'git://github.com/openstack/fuel-ccp-installer.git'
-$fuel_ccp_installer_repo_rev = 'master'
-$fuel_qa_repo = 'git://github.com/openstack/fuel-qa.git'
+$tcp_qa_repo = 'git://github.com/mirantis/tcp-qa.git'
+$tcp_qa_repo_rev = 'master'
 # etc
 $path_to_script_for_cron = '/usr/local/bin/run_puppet.sh'
 $cron_run_puppet_logs = '/var/log/run_puppet.log'
@@ -38,11 +34,6 @@ $temp_path_for_vagrant_package = '/var/tmp'
 ###############################################################################
 # User data
 $users_hash = {
-  'adidenko' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwKpK7YBECkad/ureUhratFOt9BG4WarY4Vp3E5sdtDk+w7AzrK4gXIsDc+CMHkuTpzNMXSvNXYLskpNt1ndCA455BdEr60pyA/HBsxeqio4J1dwlLRbynZRFhjSR+6OyyAf8QCIGCYQZdkQyrHdEKPQNLMa6Pg5bDI6LiPuf+W+JJfUXpychazkAH0FK8kz+vFmLhIiwzVSzH316jBTv8iAfXjyAcgIE5SwkRMBO6bEpNIL7nMhb24i5cKDRruUAfOrLRYIEzur9b9hXFnZo3OSCjn5JwVJzoHusMj1m60leU5vpSjb4JjXkGlVMDmakASmgwQAir/HKlb3Ca6pQ9 adidenko@adidenko-pc',
-    ip_pool      => '10.110.0.0/16:24',
-    vagrant_pool => '10.210.0.0/16',
-  },
   'svasilenko' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDbNUC2UJiVk0bHmbVBHd4L22M3Mc3HVPdZZja7gzzUJDI/MIGoTSX8/Q38olBHg6i/9ePzroMqQS70x/LvuEgfKMDUcEBhggq22zea/wohMmMPwiGTEJ3j0CfckXM2cfjRHweHu4U//4SiSgLHi3nnEhYJUvFkOq10qOtZd2iT76sbKpnIEcRVfDcIy01G/wZQLX0SiCk8hWh9ERBqnW2OjNhwG/a2SdoPN25T1HmHAhLJykcGXb7BmrMNe7XFcNsqleMsopTXcqtZBu+ysEbNywPQKUiJrwqOtzkncQwwuKlr53EaXwBY5UHQwoFSXXi28JjmvEZAzA+UBMrPDHrx',
     ip_pool      => '10.120.0.0/16:24',
@@ -53,29 +44,18 @@ $users_hash = {
     ip_pool      => '10.130.0.0/16:24',
     vagrant_pool => '10.230.0.0/16',
   },
-  'aroma' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOVomDosX6yuF46qh1HFBWCf8OiJY2nKKfbSNf5BItcHOErtjrOPd0NliPSW+Akr4fy5wln1nlIGfMjq+ZVY1Yv59hBB1Hbebik3K5d+BX9KIYHctjrclXLhtiXCFS/X2XRoMcZwOq1ozdo7S7aKSGl6fZVfaxjF1KMIc7RajmEop3eLYMkurqcxjdhBb2FplEpumHnBJtHhgnCDOI4DwVpczVhUDun5YRmCS7w1VcQ5LQphll5Pnj11G9xw84vwPIINr5NvqkKYudnWjF4elqnPMfr+A9m4ZeBgDZPO6QSMtYL3ZImANwaNtw1poZzxzVgVFmM9yCS/QJjqV3/br4mY6g00hmqqFdnZRi5MTMskvq7aBV11DCgJvrzX24RVmyYi6hFo5pqWqieaGDKSH0I7/kQXbuJnjyCTXdMwaqDiNOZkGoHNwucfNVJ6TugoJWhILpqkqc8hCz4i14v/zbKm7musoeIXUod3UxlVB34PdRhU4m0GznmfOdEWNwz1u29IeeQVunGwwzWnHENvlqMtpiWPXyPjNqO+4VKtzlioYIEgGS4gFGpq+RP0z9EDO9qU/nwUPVfp2izwd39XwKtuqlMLBxf6dYy2FJAd9q6Uzbv0aN5K9CRvsqFSVjzY9Vv0BS0VsZgP9/ie3i98zpPNO7JpqGRjkq64TL6RDyDw== aroma@mirantis.com',
-    ip_pool      => '10.140.0.0/16:24',
-    vagrant_pool => '10.240.0.0/16',
-  },
   'akasatkin' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJFOEwYid83klmXcQs9QBDJwb1EG6Ly7DpJ32aH8gB8uguUPVO3rS/08GNav7+6GFLwlbWHVDe1MIFeNvyqh778B2piCzoajIT8aZFiutjbGtVPfkGkt94mibVutjO36eSEjEDW8GYQ2boisibha6B2mlz126y7nJN1VDSUr05Ro719i696vdN0fglu5DlT6qnOSei16EqkgQcMdyoxCfUOy9zBe3p1jGd2XKCOy3aGkhixEj6oaWSFRcA48SgqNSUO9A5NHTmWT/3j76Jsk92yw4e5OenWJbVx0BkU8q6U5fIncxkIQRYFUqB0X1TT9PnktDD4iJwNMXY7W2hYN2/ aleksey@aleksey-ThinkPad',
     ip_pool      => '10.160.0.0/16:24',
     vagrant_pool => '10.60.0.0/16',
-  },
-  'apopovych' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDALtQKLsFXAJrOe1FL/5T9Rn7nHuTrfNKVb/reqpnMaPUcmRLPPmT9OqR5DiwYCf78xk8vHh5ogR4Cg5mdpgJwVGkQYhCqjiNiMFmlKImQx0bMlj1vQJk+x7qQQFras5jRHV6Ui2yI3o5laxX7GzgYlt39qMBEtyZrzwHzxfT//NQcFOYnKWjgcH8Z7C+nR8rixaicJEQ7jEAQVyzeA+I94gErd1Uy9LUXO33L4jKStKeQN89vl0OF6rperji1B9qFRb2CW/+kMdLmDBeoKHbTVYikHG8c15E1oaw6EeepWx8AaeFHi9T2+xwOrJ4Pw1UCyi/5d9Qf0RE3FdoAUvnJ falkerson@quasar',
-    ip_pool      => '10.180.0.0/16:24',
-    vagrant_pool => '10.80.0.0/16',
   },
   'ssalagame' => {
     pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDD2+mfcpRfoa+vwTeZEF51vhCwbVCYXxWWViIdrhph3uHiEaL3D3v564ECRfn0wqkLHUZNkZu91CTCZQ+h4vXA/owH3kJ9tRlW0c7V+lK5UayprF4bQ3ffk+fipqeqnv8ObqxiD0/9wkfVxWb9jnKNf45PKGp5GLzGgOvAntFZINR1XG3watnzlzmgmRQS9a6Jghr5Acn5FRRPlCXFv+VEg1Eadza34RiY36qVl79vq+9azTKS4nFQhrrid7LxcApCJlQnyYBdfDomcXMEE1ZmCiyoll5jwzTnP/DtR/YpAPcBXZcx/sbO8VnoHVMzA43DmqNLa+F2H9cegbqS6LYP ssalagame@mirantisits-MacBook-Pro-8.local',
     ip_pool      => '10.190.0.0/16:24',
     vagrant_pool => '10.90.0.0/16',
   },
-  'aarzhanov' => {
-    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDULnUS0LRq5K95vo0rFuxRxHt7vK/M/m4HVYNe0FcGnLESeFEb8Ip5NYl2P+77OQP/uPpOnDorFgBqANQXw8pHRihqRNXG7PylrOITHc/0RLiJvIEWt82Fw0Sz/6fY6b+/mVs01kD25MJy5lWNZEtxbbSaCmtst/9+ZIySYPnL2rNf3wTsW/IHDAziCqZr6nxfp0cIPy5KtNdT/AithsPvimdveSe25uEdZKxvfE/r3c6wock73ZIDLb9bzPaPQX5kZc9AAAuBfL2Vtzb9juFvPnwkK3mC/geGppP00wvmO12/WqEHRh92BMVpNOTgYpsvU37E9S5pjbTejTlcLPMR coolenigmaboy@aarzhanov',
-    ip_pool      => '10.115.0.0/16:24',
+  'vyakovlev' => {
+    pubkey       => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTwut7jb55gax2Fz7uP9JOVNFPB0xnRH/baqRoxupedfpFmWz7EL/MUp097kRSgfK77WXTqr7jfpKVqV/aOURq1RG71Tt901s5aUgzNMKOabsqKddycahDuwrOGsxZkKTUJBd86762rnjZ8+fDoVycvdAat6am711evMkMVrFZLYi3FTEEwQcw7egjGtBo/3uXFoTf3tC9DPVqeO+tvPuDka4ajkYzdxEN8Rk0V4fc47OpckQWclRY90bbCD7byRWd/XEu+AS5xT7A8wnx7c0u4PnBUQUy6om7N0GpaoE/wzKn+x1OX/4x0c0DP1durABAauqrC+7nG9J9W4XuWbTL',
     vagrant_pool => '10.215.0.0/16',
   },
 }
@@ -136,78 +116,14 @@ define shell_user(
     group  => $user,
     mode   => '0775',
   } ->
-  file { "/home/${user}/fuel-ccp-workspace":
-    ensure => directory,
-    owner  => $user,
-    group  => $user,
-    mode   => '0755',
-  } ->
-  vcsrepo { "/home/${user}/fuel-tests":
+  vcsrepo { "/home/${user}/tcp-qa":
     ensure   => present,
     # if use "ensure => latest",
     # this overwrites any local changes to the repository.
     provider => git,
-    source   => $fuel_tests_repo,
-    revision => $fuel_tests_repo_rev,
+    source   => $tcp_qa_repo,
+    revision => $tcp_qa_repo_rev,
     user     => $user,
-  } ->
-  vcsrepo { "/home/${user}/fuel-ccp-installer":
-    ensure   => present,
-    # if use "ensure => latest",
-    # this overwrites any local changes to the repository.
-    provider => git,
-    source   => $fuel_ccp_installer_repo,
-    revision => $fuel_ccp_installer_repo_rev,
-    user     => $user,
-  }
-
-  $master_ip  = inline_template('<%= @user_hash[@user]["ip_pool"].gsub("0/16:24", "2") %>')
-  $public_vip = inline_template('<%= @user_hash[@user]["ip_pool"].gsub("0.0/16:24", "3.3") %>')
-  $octets     = split($user_hash[$user]['ip_pool'], '[.]')
-  firewall { "300 ${user}_fuelweb_nat":
-    table  => 'nat',
-    proto  => 'tcp',
-    chain  => 'PREROUTING',
-    jump   => 'DNAT',
-    dport  => "8${octets[1]}",
-    todest => "${master_ip}:8443",
-  }
-  firewall { "300 ${user}_fuelweb_allow":
-    proto       => 'tcp',
-    destination => $master_ip,
-    dport       => '8443',
-    action      => 'accept',
-    chain       => 'FORWARD',
-  }
-  firewall { "400 ${user}_fuelssh_nat":
-    table  => 'nat',
-    proto  => 'tcp',
-    chain  => 'PREROUTING',
-    jump   => 'DNAT',
-    dport  => "2${octets[1]}",
-    todest => "${master_ip}:22",
-  }
-  firewall { "400 ${user}_fuelssh_allow":
-    proto       => 'tcp',
-    destination => $master_ip,
-    dport       => '22',
-    action      => 'accept',
-    chain       => 'FORWARD',
-  }
-  firewall { "500 ${user}_horizon_nat":
-    table  => 'nat',
-    proto  => 'tcp',
-    chain  => 'PREROUTING',
-    jump   => 'DNAT',
-    dport  => "9${octets[1]}",
-    todest => "${public_vip}:80",
-  }
-  firewall { "500 ${user}_horizon_allow":
-    proto       => 'tcp',
-    destination => $public_vip,
-    dport       => '80',
-    action      => 'accept',
-    chain       => 'FORWARD',
   }
 
   # Vagrant plugin
@@ -353,8 +269,7 @@ Package<| tag == 'software' |> -> Exec<| tag == 'software' |>
 
 $packages = [
   'git',
-  'postgresql',
-  'postgresql-server-dev-all',
+  'libsqlite3-0',
   'libyaml-dev',
   'libffi-dev',
   'python-dev',
@@ -409,31 +324,20 @@ exec { 'virsh-pool-start':
 
 ###############################################################################
 # Configure virtualenv, devops, fuel-qa requirements, etc
-Class['locales'] -> Class['postgresql::server']
 Class['locales'] -> Virtual_env<||>
 
 $venvs = [
-  '/opt/fuel-devops-venv-master',
-  '/opt/fuel-devops-venv-newton',
-  '/opt/fuel-devops-venv-mitaka'
+  '/opt/fuel-devops-venv-mcp'
 ]
 
-$fuel_qa_hash = {
-  'fuel-qa-master' => {
+$tcp_qa_hash = {
+  'tcp-qa-master' => {
     rev  => 'master',
-    venv => 'fuel-devops-venv-master',
-  },
-  'fuel-qa-newton' => {
-    rev  => 'stable/newton',
-    venv => 'fuel-devops-venv-newton',
-  },
-  'fuel-qa-mitaka' => {
-    rev  => 'stable/mitaka',
-    venv => 'fuel-devops-venv-mitaka',
+    venv => 'fuel-devops-venv-mcp',
   },
 }
 
-$fuel_qa = map($fuel_qa_hash) |$x| { $x[0] }
+$tcp_qa = map($tcp_qa_hash) |$x| { $x[0] }
 
 define virtual_env(
   $venv = $name,
@@ -442,91 +346,149 @@ define virtual_env(
     command => "virtualenv --no-site-packages ${venv}",
     creates => $venv,
   } ->
+  file { "${venv}":
+    ensure => directory,
+    mode   => '0777',
+  } ->
+  file { "${venv}/devops.db":
+    ensure => present,
+    content => "",
+    mode   => '0777',
+    replace => 'no',
+  } ->
   exec { "setup-fuel-devops-for_${venv}":
-    command => "bash -c 'source ${venv}/bin/activate ; pip install git+https://github.com/openstack/fuel-devops.git@3.0.3#egg=project[postgre] --upgrade ; dos-manage.py migrate'",
+    command => "bash -c 'source ${venv}/bin/activate; pip install psycopg2; export DEVOPS_DB_NAME=${venv}/devops.db DEVOPS_DB_ENGINE=django.db.backends.sqlite3; pip install git+https://github.com/openstack/fuel-devops.git@3.0.5 --upgrade; django-admin.py syncdb --settings=devops.settings; django-admin.py migrate devops --settings=devops.settings'",
     creates => "${venv}/lib/python2.7/site-packages/devops",
   } ->
-  exec { "setup-fuel-plugin-builder-for_${venv}":
-    command => "bash -c 'source ${venv}/bin/activate ; pip install fuel-plugin-builder'",
-    creates => "${venv}/lib/python2.7/site-packages/fuel_plugin_builder",
+  exec { "add_sqlite_db_activation":
+    command => "echo 'export DEVOPS_DB_NAME=${venv}/devops.db \nexport DEVOPS_DB_ENGINE=django.db.backends.sqlite3' >> ${venv}/bin/activate",
+    unless => "grep -q DEVOPS_DB_ENGINE ${venv}/bin/activate"
   }
 }
 
-define fuelqa(
-  $fuelqa_hash,
-  $fuel_qa = $name,
+define tcpqa(
+  $tcpqa_hash,
+  $tcp_qa = $name,
 ){
-  $python_venv = $fuelqa_hash[$fuel_qa]['venv']
-  $git_rev     = $fuelqa_hash[$fuel_qa]['rev']
-  vcsrepo { "/opt/${fuel_qa}":
+  $python_venv = $tcpqa_hash[$tcp_qa]['venv']
+  $git_rev     = $tcpqa_hash[$tcp_qa]['rev']
+  vcsrepo { "/opt/${tcp_qa}":
     ensure   => present,
     # if use "ensure => latest",
     # this overwrites any local changes to the repository.
     provider => git,
-    source   => $fuel_qa_repo,
+    source   => $tcp_qa_repo,
     revision => $git_rev,
   } ->
-  file { "/opt/${fuel_qa}":
+  file { "/opt/${tcp_qa}":
     ensure => directory,
     mode   => '0777',
   } ->
-  file { "/opt/${fuel_qa}/nosetests.xml":
-    ensure => file,
-    mode   => '0666',
+  exec { "setup-${tcp_qa}":
+    cwd     => "/opt/${tcp_qa}",
+    command => "bash -c 'source /opt/${python_venv}/bin/activate ; pip install -r ./tcp_tests/requirements.txt --upgrade'",
+    creates => "/opt/${python_venv}/lib/python2.7/site-packages/k8sclient",
   } ->
-  exec { "setup-${fuel_qa}":
-    cwd     => "/opt/${fuel_qa}",
-    command => "bash -c 'source /opt/${python_venv}/bin/activate ; pip install -r ./fuelweb_test/requirements.txt --upgrade'",
-    creates => "/opt/${python_venv}/lib/python2.7/site-packages/openstack",
+  file { "/opt/${python_venv}/update-requirements.sh":
+    ensure  => file,
+    mode    => '0755',
+    content => inline_template('#!/bin/bash
+
+# created by puppet
+
+set -ex
+
+TCP_QA_COMMIT=${TCP_QA_COMMIT:-master}
+REQUIREMENTS_FILE="https://raw.githubusercontent.com/Mirantis/tcp-qa/${TCP_QA_COMMIT}/tcp_tests/requirements.txt"
+PYTHON_VENV_PATH="/opt/<%= @python_venv %>"
+
+pip_install_upgrade () {
+        source "${PYTHON_VENV_PATH}/bin/activate"
+        pip install --upgrade --upgrade-strategy=only-if-needed -r <(curl -s "${REQUIREMENTS_FILE}")
+        deactivate
+}
+
+pip_install_upgrade')
+  } ->
+  file { "/opt/${python_venv}/exports.sh":
+    ensure  => file,
+    mode    => '0755',
+    content => inline_template('#!/bin/bash
+
+# created by puppet
+
+set -a
+
+##############################
+     #  General options #
+##############################
+
+# Environment name (fuel-devops & libvirt VMs)
+ENV_NAME=mcp-k8s-$(whoami)
+
+# Cloud image used by fuel-devops to setup VMs
+IMAGE_PATH1604=/opt/images/xenial-server-cloudimg-amd64.qcow2
+
+# Name of reclass model (cluster) and template in tcp-qa
+LAB_CONFIG_NAME=virtual-mcp11-k8s-calico-minimal
+# Currently (June 2017) available templates with k8s:
+#  * virtual-mcp11-k8s-calico-minimal - 5 nodes, 16GB RAM (1 salt master, 3 kube masters, 1 kube minion)
+#  * virtual-mcp11-k8s-calico - 10 nodes, 32+GB RAM (1 salt master, 3 kube masters, 2 kube minions, 3 monitoring nodes, 1 proxy node for monitoring)
+#  * virtual-mcp11-k8s-contrail - 14 nodes,  64GB RAM (the same as above + 3 network nodes and 1 VSRX node)
+
+# APT repository to use (dist in http://apt-mk.mirantis.com/xenial), (!)salt formulas are installed from there
+# could be "stable" (kinda stable), "testing" (kinda tested) and "nightly" (just built from master)
+REPOSITORY_SUITE=testing
+
+# You can use your own GIT repository with reclass models
+#SALT_MODELS_REPOSITORY="http://apanchenko-pc.kha.mirantis.net:8080/salt-models/mcp-virtual-lab.git"
+#SALT_MODELS_BRANCH="CalicoMinimal"
+#SALT_MODELS_COMMIT="CalicoMinimal"
+
+# Hint: to check all configurable options you can use:
+#
+#    `vim tcp_tests/settings_oslo.py`
+#    `vim tcp_tests/settings.py`
+#    `fgrep -w os_env tcp_tests/templates/virtual-mcp11-k8s-calico/ -R`
+#
+#  where "virtual-mcp11-k8s-calico" is the name of reclass model you use
+
+##############################
+     #  Tests options #
+##############################
+
+# Do not shutdown environment after tests if False
+SHUTDOWN_ENV_ON_TEARDOWN=false
+
+KUBERNETES_ADMIN_USER=admin  # k8s creds
+KUBERNETES_ADMIN_PASSWORD=sbPfel23ZigJF3Bm  # k8s creds
+#KUBERNETES_DOCKER_PACKAGE=  # system package with Docker to install on nodes
+KUBERNETES_HYPERKUBE_IMAGE=docker-prod-virtual.docker.mirantis.net/mirantis/kubernetes/hyperkube-amd64:v1.6.2-2  # k8s image
+KUBERNETES_CALICO_IMAGE=docker-prod-virtual.docker.mirantis.net/mirantis/projectcalico/calico/node:latest  # calico/node image
+KUBERNETES_CALICOCTL_IMAGE=docker-prod-virtual.docker.mirantis.net/mirantis/projectcalico/calico/ctl:latest  # calico/ctl image
+KUBERNETES_CALICO_CNI_IMAGE=docker-prod-virtual.docker.mirantis.net/mirantis/projectcalico/calico/cni:latest  # calico/cni image
+KUBERNETES_NETCHECKER_ENABLED=True  # Do not install netchecker by salt formulas if False
+KUBERNETES_NETCHECKER_AGENT_IMAGE=mirantis/k8s-netchecker-agent:latest
+KUBERNETES_NETCHECKER_SERVER_IMAGE=mirantis/k8s-netchecker-server:latest
+KUBERNETES_CALICO_POLICY_ENABLED=true  # do not install calico policy controller if False
+#KUBERNETES_CALICO_POLICY_IMAGE=  # calico policy controller image
+
+set +a')
   }
-#  tidy { "delete-requirements-in-${fuel_qa}":
-#    path    => "/opt/${fuel_qa}/fuelweb_test",
-#    recurse => 1,
-#    matches => [ 'requirements*.txt' ],
-#    rmdirs  => false,
-#  }
 }
-
-#exec { 'update-pg-config':
-#  command => "sed -ir 's/peer/trust/' $pg_conf",
-#  onlyif  => "grep -v ^# $pg_conf | grep peer"
-#} ~>
-#service { 'postgresql':
-#  ensure => running,
-#}
-
-class { '::postgresql::server': }
-
-postgresql::server::db { 'nailgun':
-  user     => 'nailgun',
-  password => postgresql_password('nailgun', 'nailgun'),
-}
-
-postgresql::server::db { 'fuel_devops':
-  user     => 'fuel_devops',
-  password => postgresql_password('fuel_devops', 'fuel_devops'),
-} ->
-virtual_env { $venvs: } ->
-exec { 'setup-django-db':
-  command => 'bash -c "source /opt/fuel-devops-venv-master/bin/activate ; django-admin.py syncdb --settings=devops.settings ; django-admin.py migrate devops --settings=devops.settings"',
-  unless  => 'bash -c "source /opt/fuel-devops-venv-master/bin/activate ; dos.py list"',
-} ->
-fuelqa { $fuel_qa:
-  fuelqa_hash => $fuel_qa_hash,
-}
-
 
 kmod::load { 'br_netfilter': } ->
 sysctl { 'net.bridge.bridge-nf-call-iptables': value => '0' }
 
-###############################################################################
-# Create directories for logs, iso and profile file. 
-file { '/var/log/nailgun':
-  ensure => directory,
-  mode   => '0777',
+virtual_env { $venvs: } ->
+tcpqa { $tcp_qa:
+  tcpqa_hash => $tcp_qa_hash,
 }
 
-file { '/opt/fuel-iso':
+###############################################################################
+# Create directories for images  and profile file.
+
+file { '/opt/images':
   ensure => directory,
   mode   => '0777',
 }
@@ -536,13 +498,6 @@ file { '/etc/profile.d/team-network.sh':
   mode    => '0755',
   content => inline_template('# created by puppet
 
-declare -A ip_pools
-ip_pools=( \
-<% @users_hash.each do |user, user_hash| -%>
-["<%= user %>"]="<%= user_hash["ip_pool"] %>" \
-<% end -%>
-)
-
 declare -A vagrant_pools
 vagrant_pools=( \
 <% @users_hash.each do |user, user_hash| -%>
@@ -550,16 +505,7 @@ vagrant_pools=( \
 <% end -%>
 )
 
-declare -A fmaster
-fmaster=( \
-<% @users_hash.each do |user, user_hash|
-  master_port = user_hash["ip_pool"].split(/\./)[1] -%>
-["<%= user %>"]="<%= @fqdn %>:8<%= master_port %>" \
-<% end -%>
-)
-export POOL_DEFAULT="${ip_pools[$(whoami)]}"
 export VAGRANT_POOL="${vagrant_pools[$(whoami)]}"
-export MY_MASTER="${fmaster[$(whoami)]}"
 export GOPATH="${HOME}"/gopath
 export PATH="${HOME}"/bin:"${HOME}"/gopath/bin:"${PATH}"
 function helpme {
@@ -567,54 +513,30 @@ echo -e "\e[34m#################################################################
 echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
 echo -e "\e[34m########################################################################\e[0m    "
 echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  \e[1mFuel-devops path:\e[0m                                              "
-echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-master ( for Fuel 11 and CCP installer )         "
-echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-newton ( for Fuel 10 )                           "
-echo -e "\e[34m#\e[0m    /opt/fuel-devops-venv-mitaka ( for Fuel 9.x )                          " 
+echo -e "\e[34m#\e[0m  \e[1mClone tcp-qa git repository to home dir:\e[0m                       "
+echo -e "\e[34m#\e[0m    git clone https://github.com/Mirantis/tcp-qa                           "
 echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  \e[1mFuel-qa path:\e[0m                                                  "
-echo -e "\e[34m#\e[0m    /opt/fuel-qa-master ( for Fuel 11 )                                    "
-echo -e "\e[34m#\e[0m    /opt/fuel-qa-newton ( for Fuel 10 )                                    "
-echo -e "\e[34m#\e[0m    /opt/fuel-qa-mitaka ( for Fuel 9.x )                                   "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  \e[1mTest scripts path:\e[0m                                             " 
-echo -e "\e[34m#\e[0m    "${HOME}"/fuel-tests                                                   "
+echo -e "\e[34m#\e[0m  \e[1mCopy settings file into your test dir:\e[0m                         "
+echo -e "\e[34m#\e[0m    cp /opt/fuel-devops-venv-mcp/exports.sh ~/tcp-qa/exports.sh            "
 echo -e "\e[34m#\e[0m                                                                           "
 echo -e "\e[34m#\e[0m  \e[1mDirectory for ISO sharing:\e[0m                                     "
-echo -e "\e[34m#\e[0m    /opt/fuel-iso                                                          "
+echo -e "\e[34m#\e[0m    /opt/images/                                                           "
 echo -e "\e[34m#\e[0m                                                                           "
 echo -e "\e[34m#                        # COMMANDS: #\e[0m                                      "
 echo -e "\e[34m#\e[0m                                                                           "
 echo -e "\e[34m#\e[0m  \e[1mRun tests:\e[0m                                                     "
-echo -e "\e[34m#\e[0m    * Activate the necessary fuel-devops venv and list envs:               "
-echo -e "\e[34m#\e[0m       \e[37m . /opt/fuel-devops-venv-XXXXXX/bin/activate \e[0m            "
+echo -e "\e[34m#\e[0m    * Update python venv if needed (e.g. requirements changed in tcp-qa):  "
+echo -e "\e[34m#\e[0m       \e[37m export TCP_QA_COMMIT=master \e[0m                            "
+echo -e "\e[34m#\e[0m       \e[37m sudo -E /opt/fuel-devops-venv-mcp/update-requirements.sh\e[0m"
+echo -e "\e[34m#\e[0m    * Activate python venv with fuel-devops for MCP:                       "
+echo -e "\e[34m#\e[0m       \e[37m . /opt/fuel-devops-venv-mcp/bin/activate \e[0m               "
 echo -e "\e[34m#\e[0m       \e[37m dos.py list \e[0m                                            "
 echo -e "\e[34m#\e[0m    * Edit some variables, if needed and run tests:                        "
-echo -e "\e[34m#\e[0m       \e[37m vim ~/fuel-tests/testsrc \e[0m                               "
-echo -e "\e[34m#\e[0m       \e[37m bash ~/fuel-tests/systest.sh -h \e[0m                        "
+echo -e "\e[34m#\e[0m       \e[37m cd ~/tcp-qa/ \e[0m                                           "
+echo -e "\e[34m#\e[0m       \e[37m vim exports.sh \e[0m                                         "
+echo -e "\e[34m#\e[0m       \e[37m source exports.sh \e[0m                                      "
+echo -e "\e[34m#\e[0m       \e[37m py.test -k test_only_k8s_install \e[0m                       "
 echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  Your \e[4mFUEL WEB URL\e[0m is:\e[33m https://"${MY_MASTER}"/\e[0m       "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  Your \e[4mIP_POOL\e[0m for SYSTEM-TESTS is:\e[33m "${POOL_DEFAULT}"\e[0m "
-echo -e "\e[34m#\e[0m  You can make sure it\'s set by running this command:                     "
-echo -e "\e[34m#\e[0m   \e[37m echo \$POOL_DEFAULT \e[0m                                        "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  \e[1mAll info about vargant env:\e[0m                                    "
-echo -e "\e[34m#\e[0m    \e[32m https://github.com/adidenko/vagrant-k8s \e[0m                   "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  Your \e[4mVAGRANT POOL\e[0m is:\e[33m "${VAGRANT_POOL}"\e[0m             "
-echo -e "\e[34m#\e[0m  You can make sure it\'s set by running this command:                     "
-echo -e "\e[34m#\e[0m   \e[37m echo \$VAGRANT_POOL \e[0m                                        "
-echo -e "\e[34m#\e[0m                                                                           "
-echo -e "\e[34m#\e[0m  \e[1mSetup Go:\e[0m                                                      "
-echo -e "\e[34m#\e[0m    * Example (specify your Go version):                                   "
-echo -e "\e[34m#\e[0m       \e[37m GIMME_OUTPUT=\$(gimme 1.7.5) && eval "\$GIMME_OUTPUT" \e[0m  "
-echo -e "\e[34m#\e[0m    * Check gimme version, go version, go env:                             "
-echo -e "\e[34m#\e[0m       \e[37m gimme version \e[0m                                          "
-echo -e "\e[34m#\e[0m       \e[37m go version \e[0m                                             "
-echo -e "\e[34m#\e[0m       \e[37m go env \e[0m                                                 "
 echo -e "\e[34m#\e[0m                                                                           "
 echo -e "\e[34m########################################################################\e[0m    "
 echo -e "\e[34m#                        # TEAM-NETWORK INFO #                         #\e[0m    "
